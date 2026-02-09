@@ -1,0 +1,174 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hamad’s Heart</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: black;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+}
+
+.video {
+  position: fixed;
+  inset: 0;
+  background: black;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.1);
+  transition: opacity 2s ease, transform 8s ease;
+}
+
+.scene.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.scene img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.65), rgba(0,0,0,.2));
+}
+
+.text {
+  position: absolute;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  text-align: center;
+  font-size: 20px;
+  line-height: 1.4;
+  opacity: 0;
+  animation: fadeUp 2s ease forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.final {
+  font-size: 32px;
+  font-weight: 900;
+}
+</style>
+</head>
+
+<body>
+
+<div class="video">
+
+  <!-- SCENE 1 -->
+  <div class="scene active">
+    <img src="IMAGE_1_HERE">
+    <div class="overlay"></div>
+    <div class="text">
+      <div class="title">WELCOME TO HAMAD’S HEART</div>
+      Created 30 years ago…<br>activated on May 21, 2025.
+    </div>
+  </div>
+
+  <!-- SCENE 2 -->
+  <div class="scene">
+    <img src="IMAGE_2_HERE">
+    <div class="overlay"></div>
+    <div class="text">Welcome back, Sara Hassan Al-Ansari.</div>
+  </div>
+
+  <!-- SCENE 3 -->
+  <div class="scene">
+    <img src="IMAGE_1_HERE">
+    <div class="overlay"></div>
+    <div class="text">Badminton. Laughter. Shared breath.</div>
+  </div>
+
+  <!-- SCENE 4 -->
+  <div class="scene">
+    <img src="IMAGE_2_HERE">
+    <div class="overlay"></div>
+    <div class="text">Movie night — Weapons (2025).</div>
+  </div>
+
+  <!-- SCENE 5 -->
+  <div class="scene">
+    <img src="IMAGE_1_HERE">
+    <div class="overlay"></div>
+    <div class="text">Portal 2. Two minds. One team.</div>
+  </div>
+
+  <!-- SCENE 6 -->
+  <div class="scene">
+    <img src="IMAGE_2_HERE">
+    <div class="overlay"></div>
+    <div class="text">Gym days. Stronger together.</div>
+  </div>
+
+  <!-- SCENE 7 -->
+  <div class="scene">
+    <img src="IMAGE_1_HERE">
+    <div class="overlay"></div>
+    <div class="text">Korean BBQ. Late talks.</div>
+  </div>
+
+  <!-- SCENE 8 -->
+  <div class="scene">
+    <img src="IMAGE_2_HERE">
+    <div class="overlay"></div>
+    <div class="text">Hiking Japan. Quiet promises.</div>
+  </div>
+
+  <!-- SCENE 9 -->
+  <div class="scene">
+    <img src="IMAGE_1_HERE">
+    <div class="overlay"></div>
+    <div class="text">LNG26. ExxonMobil. Pride.</div>
+  </div>
+
+  <!-- FINAL -->
+  <div class="scene">
+    <img src="IMAGE_2_HERE">
+    <div class="overlay"></div>
+    <div class="text final">Will you be my Valentine? 💗</div>
+  </div>
+
+</div>
+
+<script>
+const scenes = document.querySelectorAll('.scene');
+let index = 0;
+
+setInterval(() => {
+  scenes[index].classList.remove('active');
+  index = (index + 1) % scenes.length;
+  scenes[index].classList.add('active');
+}, 5500);
+</script>
+
+</body>
+</html>
