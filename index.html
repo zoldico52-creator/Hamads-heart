@@ -1,174 +1,553 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Hamad’s Heart</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Hamad’s Heart</title>
+  <style>
+    :root{
+      --pink1:#ffd1e6; --pink2:#ffb3d9; --accent:#ff4fa3; --accent2:#ff86c6;
+      --ink:#7a1e4f;
+    }
+    *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body{ height:100%; margin:0; }
+    body{ background:#000; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,system-ui,Segoe UI,Roboto,Arial,sans-serif; }
 
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  background: black;
-  color: white;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  overflow: hidden;
-}
+    /* ===== CINEMA LAYER ===== */
+    .cinema{
+      position:fixed; inset:0;
+      background:#000;
+      display:flex; align-items:center; justify-content:center;
+    }
 
-.video {
-  position: fixed;
-  inset: 0;
-  background: black;
-}
+    .frame{
+      position:absolute; inset:0;
+      background:#000;
+      overflow:hidden;
+    }
 
-.scene {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transform: scale(1.1);
-  transition: opacity 2s ease, transform 8s ease;
-}
+    .bg{
+      position:absolute; inset:-10%;
+      background-size:cover;
+      background-position:center;
+      transform: scale(1.12);
+      filter: brightness(.72) contrast(1.06) saturate(1.06);
+      transition: opacity 1.3s ease;
+      opacity:0;
+    }
+    .bg.show{ opacity:1; }
 
-.scene.active {
-  opacity: 1;
-  transform: scale(1);
-}
+    /* Ken Burns */
+    .bg.move{
+      animation: kenburns 9.5s ease-in-out forwards;
+    }
+    @keyframes kenburns{
+      0%{ transform: scale(1.12) translate3d(0,0,0); }
+      100%{ transform: scale(1.02) translate3d(var(--kx, 12px), var(--ky, -10px), 0); }
+    }
 
-.scene img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+    /* cinematic overlays */
+    .vignette{ position:absolute; inset:0; box-shadow: inset 0 0 180px rgba(0,0,0,.85); pointer-events:none; }
+    .fadeTop{ position:absolute; inset:0; background: linear-gradient(to top, rgba(0,0,0,.72), rgba(0,0,0,.18)); pointer-events:none; }
+    .grain{
+      position:absolute; inset:0; pointer-events:none;
+      background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px);
+      opacity:.14; mix-blend-mode: overlay;
+      animation: grain 1.4s steps(2) infinite;
+    }
+    @keyframes grain{ 0%{transform:translate(0,0)} 50%{transform:translate(-6px,4px)} 100%{transform:translate(4px,-5px)} }
 
-.overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,.65), rgba(0,0,0,.2));
-}
+    /* captions */
+    .captionWrap{
+      position:absolute;
+      left:0; right:0;
+      bottom: clamp(34px, 10vh, 82px);
+      padding: 0 18px;
+      display:flex;
+      justify-content:center;
+      pointer-events:none;
+    }
+    .caption{
+      width:min(900px, 96vw);
+      text-align:center;
+      color: #fff;
+      opacity:0;
+      transform: translateY(12px);
+      transition: opacity 1.0s ease, transform 1.0s ease;
+      text-shadow: 0 14px 40px rgba(0,0,0,.60);
+    }
+    .caption.show{ opacity:1; transform:translateY(0); }
+    .capEyebrow{
+      font-weight:900; letter-spacing:.32em; text-transform:uppercase;
+      font-size: 12px; opacity:.82;
+    }
+    .capTitle{
+      margin-top:10px;
+      font-size: clamp(26px, 7vw, 58px);
+      font-weight: 1000;
+      line-height:1.05;
+    }
+    .capBody{
+      margin-top:12px;
+      font-size: clamp(14px, 3.8vw, 20px);
+      opacity:.92;
+      line-height:1.35;
+    }
 
-.text {
-  position: absolute;
-  bottom: 12%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  text-align: center;
-  font-size: 20px;
-  line-height: 1.4;
-  opacity: 0;
-  animation: fadeUp 2s ease forwards;
-}
+    /* left/right memory style */
+    .caption.mem{ text-align:left; }
+    .caption.mem.right{ text-align:right; }
+    .memTag{
+      display:inline-flex; align-items:center; gap:10px;
+      padding: 10px 14px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.28);
+      font-weight:900; letter-spacing:.18em; text-transform:uppercase;
+      font-size: 11px; opacity:.92;
+    }
+    .memLine{
+      margin-top:12px;
+      font-size: clamp(18px, 5.2vw, 34px);
+      font-weight: 1000;
+      line-height:1.12;
+    }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translate(-50%, 20px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
+    /* ===== TRANSITION TO VALENTINE ===== */
+    .curtain{
+      position:fixed; inset:0;
+      background: radial-gradient(1200px 900px at 50% 30%, rgba(255,255,255,.06), rgba(0,0,0,1));
+      opacity:0; pointer-events:none;
+      transition: opacity 1.2s ease;
+      z-index:20;
+    }
+    .curtain.on{ opacity:1; }
 
-.title {
-  font-size: 28px;
-  font-weight: 800;
-  margin-bottom: 10px;
-}
+    /* ===== VALENTINE LAYER ===== */
+    .valentine{
+      position:fixed; inset:0;
+      display:none;
+      background:
+        radial-gradient(1100px 700px at 20% 10%, rgba(255,255,255,.55), transparent 60%),
+        radial-gradient(900px 600px at 80% 20%, rgba(255,255,255,.45), transparent 55%),
+        linear-gradient(135deg, var(--pink1), var(--pink2));
+      color: var(--ink);
+      overflow:hidden;
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+      display:flex; align-items:center; justify-content:center;
+      z-index:30;
+    }
 
-.final {
-  font-size: 32px;
-  font-weight: 900;
-}
-</style>
+    .hearts{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .heart{
+      position:absolute;
+      width:18px; height:18px;
+      transform: rotate(45deg);
+      background: rgba(255, 79, 163, .22);
+      animation: floatUp linear infinite;
+      filter: drop-shadow(0 6px 8px rgba(255,79,163,.18));
+    }
+    .heart::before, .heart::after{
+      content:""; position:absolute;
+      width:18px; height:18px; border-radius:50%;
+      background: inherit;
+    }
+    .heart::before{ left:-9px; top:0; }
+    .heart::after{ top:-9px; left:0; }
+    @keyframes floatUp{
+      from{ transform: translateY(110svh) rotate(45deg); opacity:0; }
+      10%{ opacity:1; }
+      to{ transform: translateY(-15svh) rotate(45deg); opacity:0; }
+    }
+
+    .card{
+      width:min(760px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.76));
+      border:1px solid rgba(255, 79, 163, .20);
+      border-radius:28px;
+      padding: clamp(18px, 4vw, 34px);
+      box-shadow: 0 18px 60px rgba(122, 30, 79, .18), inset 0 1px 0 rgba(255,255,255,.75);
+      backdrop-filter: blur(10px);
+      text-align:center;
+      animation: popIn 0.9s cubic-bezier(.2,1.2,.3,1) both;
+      position:relative;
+      z-index:2;
+    }
+    @keyframes popIn{
+      0%{ transform: translateY(14px) scale(.92); opacity:0; }
+      100%{ transform: translateY(0) scale(1); opacity:1; }
+    }
+
+    .badge{
+      display:inline-flex; gap:10px; align-items:center; justify-content:center;
+      padding:10px 14px; border-radius:999px;
+      background: rgba(255, 79, 163, .10);
+      border:1px solid rgba(255, 79, 163, .18);
+      font-weight:900;
+      margin-bottom:14px;
+      font-size: 14px;
+    }
+    .badge .dot{
+      width:8px; height:8px; border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 14px rgba(255,79,163,.7);
+    }
+    h1{ margin: 6px 0 10px; font-size: clamp(28px, 7vw, 50px); line-height:1.05; }
+    .sub{ margin: 0 0 18px; font-size: clamp(14px, 3.6vw, 18px); opacity:.85; }
+
+    .buttons{ display:grid; grid-template-columns: 1fr; gap: 12px; margin-top: 10px; }
+    @media (min-width: 560px){ .buttons{ grid-template-columns: 1fr 1fr; } }
+
+    button{
+      border:0; width:100%; cursor:pointer;
+      padding: 16px 16px;
+      border-radius: 18px;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.2;
+      min-height: 58px;
+      transition: transform .20s ease, box-shadow .20s ease, background .35s ease;
+      box-shadow: 0 10px 22px rgba(255,79,163,.18);
+      user-select:none;
+      touch-action: manipulation;
+    }
+    button.no{
+      background: linear-gradient(135deg, #ffe3f1, #ffd6ea);
+      color: #8a2b5d;
+      border: 1px solid rgba(255,79,163,.25);
+    }
+    button.yes{
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color:white;
+      border: 1px solid rgba(255,255,255,.35);
+      box-shadow: 0 16px 30px rgba(255,79,163,.30);
+    }
+    button:active{ transform: scale(0.985); }
+
+    .finalLine{
+      margin-top: 16px;
+      font-size: clamp(14px, 3.8vw, 18px);
+      font-weight: 900;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity .9s ease, transform .9s ease;
+      letter-spacing: .02em;
+    }
+    .finalLine.show{ opacity: 1; transform: translateY(0); }
+
+    .footer{ margin-top:14px; font-size: 13px; opacity:.72; }
+
+    /* heart explosion */
+    .burst{ position:fixed; inset:0; pointer-events:none; z-index:40; }
+    .puff{
+      position:absolute;
+      width:14px; height:14px;
+      transform: rotate(45deg);
+      background: rgba(255, 79, 163, .55);
+      filter: drop-shadow(0 10px 14px rgba(255,79,163,.25));
+      animation: puff 1.5s cubic-bezier(.15,.9,.2,1) forwards;
+    }
+    .puff::before, .puff::after{
+      content:"";
+      position:absolute;
+      width:14px; height:14px;
+      border-radius:50%;
+      background: inherit;
+    }
+    .puff::before{ left:-7px; top:0; }
+    .puff::after{ top:-7px; left:0; }
+    @keyframes puff{
+      0%   { transform: translate(0,0) rotate(45deg) scale(.9); opacity:0; }
+      10%  { opacity:1; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(45deg) scale(1.25); opacity:0; }
+    }
+
+    /* tiny preload note */
+    .preloadNote{
+      position:fixed; left:12px; top:12px;
+      color:#fff; font-size:12px; opacity:.7;
+      z-index:5;
+      text-shadow:0 10px 30px rgba(0,0,0,.8);
+      pointer-events:none;
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="video">
+  <div class="preloadNote" id="preloadNote">Loading…</div>
 
-  <!-- SCENE 1 -->
-  <div class="scene active">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text">
-      <div class="title">WELCOME TO HAMAD’S HEART</div>
-      Created 30 years ago…<br>activated on May 21, 2025.
+  <!-- CINEMA -->
+  <div class="cinema" id="cinema">
+    <div class="frame">
+      <div class="bg" id="bg"></div>
+      <div class="grain"></div>
+      <div class="fadeTop"></div>
+      <div class="vignette"></div>
+
+      <div class="captionWrap">
+        <div class="caption" id="caption">
+          <div class="capEyebrow" id="capEyebrow"></div>
+          <div class="capTitle" id="capTitle"></div>
+          <div class="capBody" id="capBody"></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- SCENE 2 -->
-  <div class="scene">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text">Welcome back, Sara Hassan Al-Ansari.</div>
+  <div class="curtain" id="curtain"></div>
+
+  <!-- VALENTINE -->
+  <div class="valentine" id="valentine">
+    <div class="hearts" id="hearts"></div>
+    <div class="card">
+      <div class="badge"><span class="dot"></span> cute & cozy mode</div>
+      <h1>Will you be my valentine? 💗</h1>
+      <div class="sub">Tap an option (if you can 😌)</div>
+
+      <div class="buttons">
+        <button id="btn1" class="no" type="button">No</button>
+        <button id="btn2" class="no" type="button">No</button>
+      </div>
+
+      <div class="finalLine" id="finalLine"></div>
+      <div class="footer">WELCOME TO HAMAD’S HEART ✨</div>
+    </div>
   </div>
 
-  <!-- SCENE 3 -->
-  <div class="scene">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text">Badminton. Laughter. Shared breath.</div>
-  </div>
-
-  <!-- SCENE 4 -->
-  <div class="scene">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text">Movie night — Weapons (2025).</div>
-  </div>
-
-  <!-- SCENE 5 -->
-  <div class="scene">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text">Portal 2. Two minds. One team.</div>
-  </div>
-
-  <!-- SCENE 6 -->
-  <div class="scene">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text">Gym days. Stronger together.</div>
-  </div>
-
-  <!-- SCENE 7 -->
-  <div class="scene">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text">Korean BBQ. Late talks.</div>
-  </div>
-
-  <!-- SCENE 8 -->
-  <div class="scene">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text">Hiking Japan. Quiet promises.</div>
-  </div>
-
-  <!-- SCENE 9 -->
-  <div class="scene">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text">LNG26. ExxonMobil. Pride.</div>
-  </div>
-
-  <!-- FINAL -->
-  <div class="scene">
-    <img src="FE3E331A-24CD-4F33-BA56-195861573312.png">
-    <div class="overlay"></div>
-    <div class="text final">Will you be my Valentine? 💗</div>
-  </div>
-
-</div>
+  <div class="burst" id="burst"></div>
 
 <script>
-const scenes = document.querySelectorAll('.scene');
-let index = 0;
+/* ===========================
+   1) EDIT ONLY THIS PART
+   Put your two image filenames EXACTLY as they appear in your repo.
+   Example:
+   const IMG_TEMPLE = "./FE3E331A-....png";
+   const IMG_UMBRELLA = "./D3750B2A-....png";
+=========================== */
+const IMG_TEMPLE   = "./FE3E331A-24CD-4F33-BA56-195861573312.png";  // <-- replace if yours differs
+const IMG_UMBRELLA = "./D3750B2A-7580-441C-AE76-77C8A54E4014.png";  // <-- replace with your umbrella filename
 
-setInterval(() => {
-  scenes[index].classList.remove('active');
-  index = (index + 1) % scenes.length;
-  scenes[index].classList.add('active');
-}, 5500);
+const HER_NAME = "Sara Hassan Al-Ansari";
+
+/* ===========================
+   CINEMATIC SCRIPT
+=========================== */
+const preloadNote = document.getElementById("preloadNote");
+const cinema = document.getElementById("cinema");
+const bg = document.getElementById("bg");
+const caption = document.getElementById("caption");
+const capEyebrow = document.getElementById("capEyebrow");
+const capTitle = document.getElementById("capTitle");
+const capBody = document.getElementById("capBody");
+const curtain = document.getElementById("curtain");
+const valentine = document.getElementById("valentine");
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+function setKenBurnsVector(){
+  // random gentle motion
+  const kx = (Math.random() * 26 - 13).toFixed(0) + "px";
+  const ky = (Math.random() * 22 - 11).toFixed(0) + "px";
+  bg.style.setProperty("--kx", kx);
+  bg.style.setProperty("--ky", ky);
+}
+
+function showCaption({eyebrow="", title="", body="", mode="normal", side="left", tag=""}){
+  capEyebrow.textContent = eyebrow;
+  capTitle.textContent = title;
+  capBody.textContent = body;
+
+  caption.className = "caption"; // reset
+  if (mode === "memory"){
+    caption.classList.add("mem");
+    if (side === "right") caption.classList.add("right");
+    // convert title/body into memory style without changing layout
+    capEyebrow.textContent = "";
+    capTitle.innerHTML = `<span class="memTag">${tag}</span>`;
+    capBody.innerHTML = `<div class="memLine">${body}</div>`;
+  }
+
+  // animate in
+  requestAnimationFrame(()=> caption.classList.add("show"));
+}
+
+function hideCaption(){
+  caption.classList.remove("show");
+}
+
+function setBackground(url, darker=false){
+  bg.classList.remove("show", "move");
+  bg.style.filter = darker
+    ? "brightness(.58) contrast(1.07) saturate(1.02)"
+    : "brightness(.72) contrast(1.06) saturate(1.06)";
+  bg.style.backgroundImage = `url("${url}")`;
+  setKenBurnsVector();
+  // small delay so transition applies
+  requestAnimationFrame(()=>{
+    bg.classList.add("show");
+    bg.classList.add("move");
+  });
+}
+
+const scenes = [
+  // Intro cards (warm)
+  { img: IMG_TEMPLE,  ms: 7200, eyebrow:"WELCOME", title:"WELCOME TO HAMAD’S HEART", body:"Welcome to the heart that was created 30 years ago… but only started working on the 21st of May 2025." },
+  { img: IMG_UMBRELLA, ms: 6500, eyebrow:"TODAY", title:"A TEST", body:"Today you will be having a test to truly test your love for the owner of this heart." },
+
+  // Raccoon City vibe (original, non-copyright)
+  { img: IMG_UMBRELLA, ms: 6200, eyebrow:"DET0UR", title:"WELCOME TO RACCOON CITY", body:"Stay close… just for a moment.", darker:true },
+  { img: IMG_UMBRELLA, ms: 6200, eyebrow:"SAFEHOUSE", title:"THE POLICE DEPARTMENT", body:"Quiet halls… steady heartbeat.", darker:true },
+
+  // Back sign
+  { img: IMG_TEMPLE, ms: 5600, eyebrow:"RETURNING", title:"BACK TO HAMAD’S HEART", body:`Welcome back, ${HER_NAME}.` },
+
+  // Guides (original agents)
+  { img: IMG_TEMPLE, ms: 6000, eyebrow:"GUIDES", title:"", body:"Two calm voices. One gentle path. We’ll guide you through the alley of fondest memories." },
+
+  // Memory alley (cinematic)
+  { img: IMG_TEMPLE,  ms: 5600, mode:"memory", side:"left",  tag:"LEFT • SPORT", body:"Badminton. Laughter. Shared breath." },
+  { img: IMG_UMBRELLA, ms: 5600, mode:"memory", side:"right", tag:"RIGHT • MOVIE", body:"Movie night — Weapons (2025)." },
+  { img: IMG_TEMPLE,  ms: 5600, mode:"memory", side:"left",  tag:"LEFT • GAME", body:"Portal 2. Two minds. One team." },
+  { img: IMG_UMBRELLA, ms: 5600, mode:"memory", side:"right", tag:"RIGHT • GYM", body:"Training together. Stronger together." },
+  { img: IMG_TEMPLE,  ms: 5600, mode:"memory", side:"left",  tag:"LEFT • DINNER", body:"Korean BBQ. Late talks. Warm smiles." },
+  { img: IMG_UMBRELLA, ms: 5600, mode:"memory", side:"right", tag:"RIGHT • JAPAN", body:"Hiking in Japan. Quiet promises." },
+  { img: IMG_TEMPLE,  ms: 5600, mode:"memory", side:"left",  tag:"LEFT • SHOPPING", body:"Shopping together. Little jokes. Little joys." },
+  { img: IMG_UMBRELLA, ms: 5600, mode:"memory", side:"right", tag:"RIGHT • SPORT", body:"Basketball. Playful competition." },
+  { img: IMG_TEMPLE,  ms: 5600, mode:"memory", side:"left",  tag:"LEFT • HOME", body:"A warm, safe moment… just you two." },
+
+  // LNG26 / Exxon moment + gate
+  { img: IMG_UMBRELLA, ms: 6500, mode:"memory", side:"right", tag:"RIGHT • LNG26", body:"LNG26 — ExxonMobil booth. He approaches… proud of her." },
+  { img: IMG_UMBRELLA, ms: 6500, eyebrow:"AHEAD", title:"WELCOME TO EXXONMOBIL’S TENNIS 2026", body:"Hand in hand… and proud." },
+];
+
+async function preloadImages(urls){
+  const unique = [...new Set(urls)];
+  let loaded = 0;
+  await Promise.all(unique.map(u => new Promise(resolve=>{
+    const img = new Image();
+    img.onload = img.onerror = () => { loaded++; resolve(); };
+    img.src = u;
+  })));
+}
+
+async function runCinema(){
+  // preload
+  const urls = scenes.map(s => s.img);
+  await preloadImages(urls);
+  preloadNote.style.display = "none";
+
+  for (let i=0; i<scenes.length; i++){
+    const s = scenes[i];
+
+    setBackground(s.img, !!s.darker);
+
+    hideCaption();
+    await sleep(450);
+    showCaption(s);
+
+    await sleep(s.ms);
+  }
+
+  // fade out cinema, fade in valentine
+  curtain.classList.add("on");
+  await sleep(900);
+  cinema.style.display = "none";
+  valentine.style.display = "flex";
+  curtain.classList.remove("on");
+  spawnHearts();
+}
+
+/* ===========================
+   VALENTINE INTERACTION
+=========================== */
+const hearts = document.getElementById("hearts");
+const burst = document.getElementById("burst");
+const finalLine = document.getElementById("finalLine");
+const btn1 = document.getElementById("btn1");
+const btn2 = document.getElementById("btn2");
+
+function spawnHearts(){
+  hearts.innerHTML = "";
+  const count = 22;
+  for (let i=0;i<count;i++){
+    const h = document.createElement("div");
+    h.className = "heart";
+    const left = Math.random()*100;
+    const size = 12 + Math.random()*18;
+    const dur  = 10 + Math.random()*12;
+    const delay= Math.random()*5;
+    h.style.left = left+"vw";
+    h.style.width = size+"px";
+    h.style.height= size+"px";
+    h.style.animationDuration = dur+"s";
+    h.style.animationDelay = delay+"s";
+    h.style.background = `rgba(255, 79, 163, ${0.10 + Math.random()*0.22})`;
+    hearts.appendChild(h);
+  }
+}
+
+function heartExplosion(x,y){
+  const count = 56;
+  for(let i=0;i<count;i++){
+    const p = document.createElement("div");
+    p.className = "puff";
+    const angle = Math.random()*Math.PI*2;
+    const dist  = 120 + Math.random()*260;
+    const dx = Math.cos(angle)*dist;
+    const dy = Math.sin(angle)*dist;
+    p.style.left = x+"px";
+    p.style.top  = y+"px";
+    p.style.setProperty("--dx", dx+"px");
+    p.style.setProperty("--dy", dy+"px");
+    const size = 10 + Math.random()*22;
+    p.style.width = size+"px";
+    p.style.height= size+"px";
+    const alpha = 0.26 + Math.random()*0.55;
+    p.style.background = `rgba(255, 79, 163, ${alpha})`;
+    burst.appendChild(p);
+    setTimeout(()=>p.remove(), 1600);
+  }
+}
+
+let switched = false;
+
+async function typeInto(el, text, speed=22){
+  el.textContent = "";
+  for(let i=0;i<text.length;i++){
+    el.textContent += text[i];
+    await sleep(speed);
+  }
+}
+
+async function switchButtons(evt){
+  if(switched) return;
+  switched = true;
+
+  let x = innerWidth/2, y = innerHeight/2;
+  if(evt?.touches?.[0]){ x = evt.touches[0].clientX; y = evt.touches[0].clientY; }
+  if(evt?.clientX != null){ x = evt.clientX; y = evt.clientY; }
+
+  heartExplosion(x,y);
+
+  btn1.classList.remove("no"); btn2.classList.remove("no");
+  btn1.classList.add("yes");   btn2.classList.add("yes");
+
+  await typeInto(btn1, "Always my sweet handsome man", 22);
+  await typeInto(btn2, "Forever your valentine and your gorgeous girl", 20);
+
+  await sleep(450);
+  finalLine.textContent = `Test passed. Welcome home, ${HER_NAME}.`;
+  finalLine.classList.add("show");
+}
+
+// trigger on touch/hover/focus/click
+["touchstart","pointerdown","mouseenter","focus"].forEach(ev=>{
+  btn1.addEventListener(ev, switchButtons, {passive:true});
+  btn2.addEventListener(ev, switchButtons, {passive:true});
+});
+btn1.addEventListener("click", (e)=>{ e.preventDefault(); switchButtons(e); });
+btn2.addEventListener("click", (e)=>{ e.preventDefault(); switchButtons(e); });
+
+runCinema();
 </script>
-
 </body>
 </html>
