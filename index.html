@@ -15,15 +15,25 @@
     html,body{height:100%; margin:0; background:#05060a; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
     #stage{
       position:fixed; inset:0; overflow:hidden;
-      background:#05060a;
+      background:#05060a; /* default for RE segment */
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       user-select:none;
+      transition: background 600ms ease;
+    }
+
+    /* ✅ Pink/cute “Heart” background */
+    body.cute #stage{
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,106,165,.30) 0 280px, transparent 320px),
+        radial-gradient(circle at 75% 30%, rgba(255,179,208,.22) 0 260px, transparent 320px),
+        radial-gradient(circle at 50% 85%, rgba(255,106,165,.18) 0 320px, transparent 420px),
+        linear-gradient(135deg, #220616, #0c0612 60%, #140615);
     }
 
     .bg{
       position:absolute; inset:-20px;
-      background:#05060a center/cover no-repeat;
+      background: transparent center/cover no-repeat;
       filter: saturate(1.05) contrast(1.05);
       transform: scale(1.03);
       opacity:0;
@@ -132,7 +142,6 @@
     .cute .card{ --card-bg: rgba(40,10,25,.52); border-color: rgba(255,106,165,.22); }
     .cute #hint, .cute #progress{ border-color: rgba(255,106,165,.22); }
 
-    /* Optional: a soft “fade out” moment */
     .fadeOut{
       animation: fadeOut 1200ms ease forwards;
     }
@@ -165,314 +174,314 @@
   </div>
 
 <script>
-/**
- * ✅ No auto-skip globally.
- * ✅ Auto-skip ONLY for memory scenes (the 10 scenes).
- * ✅ Portal fix: tries multiple filenames.
- */
+  const IMAGE_MAP = {
+    raccoon_city: "raccoon_city.JPG",
+    rpd: "rpd.JPG",
+    leon_q1: "leon_q1.JPG",
+    leon_q2: "leon_q2.JPG",
 
-// Your files (same folder as index.html)
-const IMAGE_MAP = {
-  raccoon_city: "raccoon_city.JPG",
-  rpd: "rpd.JPG",
-  leon_q1: "leon_q1.JPG",
-  leon_q2: "leon_q2.JPG",
+    gym: "gym.PNG",
+    kbbq_hanok: "kbbq_hanok.PNG",
+    shopping_place_vendome: "shopping_place_vendome.PNG",
 
-  gym: "gym.PNG",
-  kbbq_hanok: "kbbq_hanok.PNG",
-  shopping_place_vendome: "shopping_place_vendome.PNG",
+    portal2: ["porta12.PNG", "portal2.PNG", "PORTAL2.PNG", "porta12.png", "portal2.png"],
 
-  // PORTAL FIX: try candidates (case/name differences)
-  portal2: ["porta12.PNG", "portal2.PNG", "PORTAL2.PNG", "porta12.png", "portal2.png"],
+    weapons_movie: "weapons_movie.PNG",
+    basketball: "basketball.PNG",
+    hiking_japan: "hiking_japan.PNG",
+    bath: "bath.PNG",
+    lng26_exxon: "lng26_exxon.PNG",
+    tennis_2026: "tennis_2026.PNG"
+  };
 
-  weapons_movie: "weapons_movie.PNG",
-  basketball: "basketball.PNG",
-  hiking_japan: "hiking_japan.PNG",
-  bath: "bath.PNG",
-  lng26_exxon: "lng26_exxon.PNG",
-  tennis_2026: "tennis_2026.PNG"
-};
+  function isMemorySlideId(id){ return id.startsWith("mem_"); }
+  const MEMORY_AUTO_MS = 2600;
 
-// Helper: which slides are allowed to auto-advance
-function isMemorySlideId(id){
-  return id.startsWith("mem_");
-}
+  /* ✅ NEW: state for “No” prank flow */
+  let noAttemptedOnce = false;
 
-// Memory auto-skip duration (tweak this)
-const MEMORY_AUTO_MS = 2600; // ~2.6s per memory scene (change to 3000+ if you want)
+  const SLIDES = [
+    { id:"intro_warn", mode:"re", bg:null,
+      title:"Attention",
+      text:"This is a personalized message meant only for Sara Hassan Al-Ansari.\nIf you are not her, please exit immediately."
+    },
+    { id:"intro_confirm", mode:"re", bg:null,
+      title:"Good.",
+      text:"Now that I am certain it’s you, let us begin.\nToday, you will be tested, prepare yourself."
+    },
 
-// Slides
-const SLIDES = [
-  { id:"intro_warn", mode:"re", bg:null,
-    title:"Attention",
-    text:"This is a personalized message meant only for Sara Hassan Al-Ansari.\nIf you are not her, please exit immediately."
-  },
-  { id:"intro_confirm", mode:"re", bg:null,
-    title:"Good.",
-    text:"Now that I am certain it’s you, let us begin.\nToday, you will be tested, prepare yourself."
-  },
+    { id:"welcome_rc", mode:"re", bg:"raccoon_city", title:"Welcome to Raccoon City", text:"" },
+    { id:"rpd_shot", mode:"re", bg:"rpd", title:"Raccoon City Police Department", text:"" },
 
-  { id:"welcome_rc", mode:"re", bg:"raccoon_city", title:"Welcome to Raccoon City", text:"" },
-  { id:"rpd_shot", mode:"re", bg:"rpd", title:"Raccoon City Police Department", text:"" },
+    { id:"q1", mode:"re", bg:"leon_q1", title:"Now the test begins,", text:"Question Number 1:\nHow old was Leon in RE4" },
+    { id:"q1_wrong", mode:"re", bg:"leon_q1", title:"WRONG!", text:"He was 27" },
+    { id:"q2", mode:"re", bg:"leon_q2", title:"Now, on to the next question", text:"What’s the most used word by Leon throughout the whole franchise?" },
 
-  { id:"q1", mode:"re", bg:"leon_q1", title:"Now the test begins,", text:"Question Number 1:\nHow old was Leon in RE4" },
-  { id:"q1_wrong", mode:"re", bg:"leon_q1", title:"WRONG!", text:"He was 27" },
-  { id:"q2", mode:"re", bg:"leon_q2", title:"Now, on to the next question", text:"What’s the most used word by Leon throughout the whole franchise?" },
+    { id:"psych", mode:"cute", bg:null,
+      title:"PSYCH!",
+      text:"You really thought that was the test huh,\nwell, sorry to disappoint you but who cares, hehehehe"
+    },
 
-  { id:"psych", mode:"cute", bg:null,
-    title:"PSYCH!",
-    text:"You really thought that was the test huh,\nwell, sorry to disappoint you but who cares, hehehehe"
-  },
+    /* ✅ Updated text exactly as you requested */
+    { id:"welcome_heart", mode:"cute", bg:null,
+      title:"Welcome Sara",
+      text:"You are now in the chamber we call, Hamad’s Heart,\nA place that was created 30 years ago but only started working on the 21st of May 2025,\nAnd tonight you will be guided through the ally of fondest memories"
+    },
 
-  { id:"welcome_heart", mode:"cute", bg:null,
-    title:"Welcome Sara",
-    text:"You are now in the chamber we call, Hamad’s heart,\nand tonight you will be guided through the ally of fondest memories"
-  },
-  { id:"lore_1", mode:"cute", bg:null,
-    title:"",
-    text:"That’s what we call it around here.\nTo be honest, we dont really understand him sometimes and his stupid memories\nbut we thought you might help us understand what all of this means"
-  },
-  { id:"lore_2", mode:"cute", bg:null,
-    title:"",
-    text:"You see we keep seeing him store some dumb activities in the section we call\n(The Ally of Fondest Memories)\nand that usually only stores the fondest of all memories to the person’s heart and soul"
-  },
-  { id:"lore_3", mode:"cute", bg:null,
-    title:"",
-    text:"We will walk you through the ally and show you around 10 scenes or memories that make no sense to us why they’re there,\nbut we really do hope that you can be helpful regarding this matter,\nanyways, we shall begin our journey now"
-  },
+    { id:"lore_1", mode:"cute", bg:null,
+      title:"",
+      text:"That’s what we call it around here.\nTo be honest, we dont really understand him sometimes and his stupid memories\nbut we thought you might help us understand what all of this means"
+    },
+    { id:"lore_2", mode:"cute", bg:null,
+      title:"",
+      text:"You see we keep seeing him store some dumb activities in the section we call\n(The Ally of Fondest Memories)\nand that usually only stores the fondest of all memories to the person’s heart and soul"
+    },
+    { id:"lore_3", mode:"cute", bg:null,
+      title:"",
+      text:"We will walk you through the ally and show you around 10 scenes or memories that make no sense to us why they’re there,\nbut we really do hope that you can be helpful regarding this matter,\nanyways, we shall begin our journey now"
+    },
 
-  // 10 memories (AUTO SKIP ONLY HERE)
-  { id:"mem_gym", mode:"cute", bg:"gym", title:"Memory", text:"GYM" },
-  { id:"mem_kbbq", mode:"cute", bg:"kbbq_hanok", title:"Memory", text:"KBBQ - HANOK" },
-  { id:"mem_shop", mode:"cute", bg:"shopping_place_vendome", title:"Memory", text:"SHOPPING PLACE VENDOME" },
-  { id:"mem_portal", mode:"cute", bg:"portal2", title:"Memory", text:"PORTAL 2" },
-  { id:"mem_weap", mode:"cute", bg:"weapons_movie", title:"Memory", text:"WEAPONS (MOVIE NIGHT)" },
-  { id:"mem_ball", mode:"cute", bg:"basketball", title:"Memory", text:"BASKETBALL" },
-  { id:"mem_hike", mode:"cute", bg:"hiking_japan", title:"Memory", text:"HIKING (JAPAN)" },
-  { id:"mem_bath", mode:"cute", bg:"bath", title:"Memory", text:"BATH" },
-  { id:"mem_lng", mode:"cute", bg:"lng26_exxon", title:"Memory", text:"LNG26 - EXXONMOBIL" },
-  { id:"mem_tennis", mode:"cute", bg:"tennis_2026", title:"Final Memory", text:"TENNIS 2026" },
+    // 10 memories (AUTO SKIP ONLY HERE)
+    { id:"mem_gym", mode:"cute", bg:"gym", title:"Memory", text:"GYM" },
+    { id:"mem_kbbq", mode:"cute", bg:"kbbq_hanok", title:"Memory", text:"KBBQ - HANOK" },
+    { id:"mem_shop", mode:"cute", bg:"shopping_place_vendome", title:"Memory", text:"SHOPPING PLACE VENDOME" },
+    { id:"mem_portal", mode:"cute", bg:"portal2", title:"Memory", text:"PORTAL 2" },
+    { id:"mem_weap", mode:"cute", bg:"weapons_movie", title:"Memory", text:"WEAPONS (MOVIE NIGHT)" },
+    { id:"mem_ball", mode:"cute", bg:"basketball", title:"Memory", text:"BASKETBALL" },
+    { id:"mem_hike", mode:"cute", bg:"hiking_japan", title:"Memory", text:"HIKING (JAPAN)" },
+    { id:"mem_bath", mode:"cute", bg:"bath", title:"Memory", text:"BATH" },
+    { id:"mem_lng", mode:"cute", bg:"lng26_exxon", title:"Memory", text:"LNG26 - EXXONMOBIL" },
+    { id:"mem_tennis", mode:"cute", bg:"tennis_2026", title:"Final Memory", text:"TENNIS 2026" },
 
-  // After tennis: fade out -> back to cute heart talk (manual tap again)
-  { id:"post_tennis_fade", mode:"cute", bg:"tennis_2026", title:"", text:"" , special:"fadeAfterTennis" },
+    { id:"post_tennis_fade", mode:"cute", bg:"tennis_2026", title:"", text:"", special:"fadeAfterTennis" },
 
-  { id:"back_to_heart", mode:"cute", bg:null,
-    title:"Back to Hamad’s Heart",
-    text:"…and just like that, we’re back."
-  },
+    { id:"back_to_heart", mode:"cute", bg:null, title:"Back to Hamad’s Heart", text:"…and just like that, we’re back." },
+    { id:"understand_q", mode:"cute", bg:null, title:"Did you understand anything ?", text:"We are so lost" },
+    { id:"understand_a", mode:"cute", bg:null, title:"You did !!?, thats amazing",
+      text:"Since you understood those memories and scenes,\ni guess you can answer his final question and get out of here,\nwe could never get it right"
+    },
+    { id:"calm", mode:"cute", bg:null, title:"", text:"Take a deep breath and remember to stay calm\nif you want to succeed and get out of here safely" },
 
-  { id:"understand_q", mode:"cute", bg:null, title:"Did you understand anything ?", text:"We are so lost" },
-  { id:"understand_a", mode:"cute", bg:null, title:"You did !!?, thats amazing", text:"Since you understood those memories and scenes,\ni guess you can answer his final question and get out of here,\nwe could never get it right" },
-  { id:"calm", mode:"cute", bg:null, title:"", text:"Take a deep breath and remember to stay calm\nif you want to succeed and get out of here safely" },
+    { id:"valentine", mode:"cute", bg:null, title:"Final Question", text:"Will you be my valentine ?", extra:"valentineButtons" },
 
-  { id:"valentine", mode:"cute", bg:null, title:"Final Question", text:"Will you be my valentine ?", extra:"valentineButtons" },
+    /* ✅ YES path */
+    { id:"yes", mode:"cute", bg:null, title:"YES 💗", text:"Perfect.\nYou just made his whole universe smile." },
 
-  { id:"yes", mode:"cute", bg:null, title:"YES 💗", text:"Perfect.\nYou just made his whole universe smile." },
-  { id:"no", mode:"cute", bg:null, title:"NO 🙃", text:"That… is unfortunate.\nBut you’re still safe.\n(He’ll be dramatically sad for a bit.)" },
+    /* ✅ NO prank sequence */
+    { id:"no_fake1", mode:"cute", bg:null, title:"Wait…", text:"i cant believe you said Yes" },
+    { id:"no_fake2", mode:"cute", bg:null, title:"Yup.", text:"Yes, You did" },
+    { id:"no_fake3", mode:"cute", bg:null, title:"Alright…", text:"Okay okay, lets go back to the question since you cant remember what you chose" },
 
-  { id:"final_exit", mode:"cute", bg:null, title:"One last thing…",
-    text:"You may physically exit Hamad’s heart for now…\nbut you will never be able to leave."
-  }
-];
+    /* ✅ Second NO becomes a “forced yes” love line */
+    { id:"no_final", mode:"cute", bg:null, title:"Aha 💗", text:"I will always be your valentine and your gorgeous girl" },
 
-// DOM
-const stage = document.getElementById("stage");
-const bgA = document.getElementById("bgA");
-const bgB = document.getElementById("bgB");
-const hearts = document.getElementById("hearts");
-const card = document.getElementById("card");
-const ttl = document.getElementById("ttl");
-const txt = document.getElementById("txt");
-const extra = document.getElementById("extra");
-const progress = document.getElementById("progress");
+    { id:"final_exit", mode:"cute", bg:null, title:"One last thing…",
+      text:"You may physically exit Hamad’s heart for now…\nbut you will never be able to leave."
+    }
+  ];
 
-let idx = 0;
-let usingA = true;
-let locked = false;
-let autoTimer = null;
+  // DOM
+  const stage = document.getElementById("stage");
+  const bgA = document.getElementById("bgA");
+  const bgB = document.getElementById("bgB");
+  const hearts = document.getElementById("hearts");
+  const card = document.getElementById("card");
+  const ttl = document.getElementById("ttl");
+  const txt = document.getElementById("txt");
+  const extra = document.getElementById("extra");
+  const progress = document.getElementById("progress");
 
-// Mode toggle
-function setMode(mode){
-  const cute = mode === "cute";
-  document.body.classList.toggle("cute", cute);
-  hearts.classList.toggle("on", cute);
-}
+  let idx = 0;
+  let usingA = true;
+  let locked = false;
+  let autoTimer = null;
 
-// Resolve absolute URL (GitHub Pages safe)
-function resolveUrl(file){
-  return new URL(file, window.location.href).href;
-}
-
-// Normalize file entry (string or array)
-function candidatesFor(key){
-  const entry = IMAGE_MAP[key];
-  if(!entry) return [];
-  return Array.isArray(entry) ? entry : [entry];
-}
-
-// Preload first working candidate
-async function pickWorkingFile(key){
-  const cands = candidatesFor(key);
-  for(const file of cands){
-    try{
-      await new Promise((res, rej) => {
-        const im = new Image();
-        im.onload = () => res(true);
-        im.onerror = () => rej(new Error("fail"));
-        im.src = resolveUrl(file);
-      });
-      return file; // first success
-    } catch(e){}
-  }
-  console.error("No working image found for key:", key, "candidates:", cands);
-  return null;
-}
-
-// Crossfade background
-async function crossfadeTo(fileOrNull){
-  const next = usingA ? bgB : bgA;
-  const prev = usingA ? bgA : bgB;
-
-  if(!fileOrNull){
-    next.style.backgroundImage = "none";
-    next.style.backgroundColor = "#05060a";
-  } else {
-    next.style.backgroundColor = "transparent";
-    next.style.backgroundImage = `url("${resolveUrl(fileOrNull)}")`;
+  function setMode(mode){
+    const cute = mode === "cute";
+    document.body.classList.toggle("cute", cute);
+    hearts.classList.toggle("on", cute);
   }
 
-  next.style.opacity = "1";
-  prev.style.opacity = "0";
-  usingA = !usingA;
-}
-
-// Buttons
-function renderExtra(slide){
-  extra.innerHTML = "";
-  if(slide.extra === "valentineButtons"){
-    const row = document.createElement("div");
-    row.className = "btnRow";
-
-    const yes = document.createElement("button");
-    yes.className = "btn pink";
-    yes.textContent = "Yes 💗";
-    yes.onclick = (e)=>{ e.stopPropagation(); goToId("yes"); };
-
-    const no = document.createElement("button");
-    no.className = "btn alt";
-    no.textContent = "No 🙃";
-    no.onclick = (e)=>{ e.stopPropagation(); goToId("no"); };
-
-    row.appendChild(yes);
-    row.appendChild(no);
-    extra.appendChild(row);
+  function resolveUrl(file){
+    return new URL(file, window.location.href).href;
   }
-}
 
-function setProgress(){
-  progress.textContent = `${idx+1}/${SLIDES.length}`;
-}
-
-function showSlide(i){
-  const s = SLIDES[i];
-  setMode(s.mode);
-  ttl.textContent = s.title || "";
-  txt.textContent = s.text || "";
-  renderExtra(s);
-  setProgress();
-}
-
-// Auto only for memory scenes
-function scheduleAutoIfNeeded(){
-  clearTimeout(autoTimer);
-  const s = SLIDES[idx];
-  if(!s) return;
-
-  // Auto only on mem_ slides
-  if(isMemorySlideId(s.id)){
-    autoTimer = setTimeout(() => {
-      next(); // advance automatically
-    }, MEMORY_AUTO_MS);
+  function candidatesFor(key){
+    const entry = IMAGE_MAP[key];
+    if(!entry) return [];
+    return Array.isArray(entry) ? entry : [entry];
   }
-}
 
-async function goTo(i){
-  if(locked) return;
-  const s = SLIDES[i];
-  if(!s) return;
+  async function pickWorkingFile(key){
+    const cands = candidatesFor(key);
+    for(const file of cands){
+      try{
+        await new Promise((res, rej) => {
+          const im = new Image();
+          im.onload = () => res(true);
+          im.onerror = () => rej(new Error("fail"));
+          im.src = resolveUrl(file);
+        });
+        return file;
+      } catch(e){}
+    }
+    console.error("No working image found for key:", key, "candidates:", cands);
+    return null;
+  }
 
-  locked = true;
-  clearTimeout(autoTimer);
+  /* ✅ IMPORTANT FIX: when bg is null, keep it TRANSPARENT so pink stage background shows */
+  async function crossfadeTo(fileOrNull){
+    const next = usingA ? bgB : bgA;
+    const prev = usingA ? bgA : bgB;
 
-  // tennis fade special
-  if(s.special === "fadeAfterTennis"){
-    // show tennis bg already, then fade card + bg, then go to back_to_heart
-    card.classList.add("fadeOut");
-    await new Promise(r => setTimeout(r, 1200));
-    card.classList.remove("fadeOut");
-    // continue
+    if(!fileOrNull){
+      next.style.backgroundImage = "none";
+      next.style.backgroundColor = "transparent";   // ✅ was dark before
+    } else {
+      next.style.backgroundColor = "transparent";
+      next.style.backgroundImage = `url("${resolveUrl(fileOrNull)}")`;
+    }
+
+    next.style.opacity = "1";
+    prev.style.opacity = "0";
+    usingA = !usingA;
+  }
+
+  function renderExtra(slide){
+    extra.innerHTML = "";
+    if(slide.extra === "valentineButtons"){
+      const row = document.createElement("div");
+      row.className = "btnRow";
+
+      const yes = document.createElement("button");
+      yes.className = "btn pink";
+      yes.textContent = "Yes 💗";
+      yes.onclick = (e)=>{ e.stopPropagation(); goToId("yes"); };
+
+      const no = document.createElement("button");
+      no.className = "btn alt";
+      no.textContent = "No 🙃";
+
+      no.onclick = (e)=>{
+        e.stopPropagation();
+
+        // ✅ First time: prank sequence
+        if(!noAttemptedOnce){
+          noAttemptedOnce = true;
+          goToId("no_fake1");
+          return;
+        }
+
+        // ✅ Second time: turns into love line
+        goToId("no_final");
+      };
+
+      row.appendChild(yes);
+      row.appendChild(no);
+      extra.appendChild(row);
+    }
+  }
+
+  function setProgress(){
+    progress.textContent = `${idx+1}/${SLIDES.length}`;
+  }
+
+  function showSlide(i){
+    const s = SLIDES[i];
+    setMode(s.mode);
+    ttl.textContent = s.title || "";
+    txt.textContent = s.text || "";
+    renderExtra(s);
+    setProgress();
+  }
+
+  function scheduleAutoIfNeeded(){
+    clearTimeout(autoTimer);
+    const s = SLIDES[idx];
+    if(!s) return;
+
+    if(isMemorySlideId(s.id)){
+      autoTimer = setTimeout(() => next(), MEMORY_AUTO_MS);
+    }
+  }
+
+  async function goTo(i){
+    if(locked) return;
+    const s = SLIDES[i];
+    if(!s) return;
+
+    locked = true;
+    clearTimeout(autoTimer);
+
+    if(s.special === "fadeAfterTennis"){
+      card.classList.add("fadeOut");
+      await new Promise(r => setTimeout(r, 1200));
+      card.classList.remove("fadeOut");
+
+      idx = i;
+      showSlide(idx);
+
+      await crossfadeTo(null);
+      locked = false;
+      return;
+    }
+
+    let file = null;
+    if(s.bg){
+      file = await pickWorkingFile(s.bg);
+    }
+    await crossfadeTo(file);
+
     idx = i;
     showSlide(idx);
-    // fade background to cute heart (no bg)
-    await crossfadeTo(null);
-    locked = false;
-    // jump to next slide (manual tap)
-    return;
+
+    setTimeout(()=> locked = false, 850);
+    scheduleAutoIfNeeded();
   }
 
-  // background resolve
-  let file = null;
-  if(s.bg){
-    file = await pickWorkingFile(s.bg);
-  }
-  await crossfadeTo(file);
-
-  idx = i;
-  showSlide(idx);
-
-  setTimeout(()=> locked = false, 850);
-
-  // schedule auto if memory slide
-  scheduleAutoIfNeeded();
-}
-
-function goToId(id){
-  const i = SLIDES.findIndex(x => x.id === id);
-  if(i >= 0) goTo(i);
-}
-
-function next(){
-  // if at end, do nothing
-  if(idx >= SLIDES.length - 1) return;
-
-  const currentId = SLIDES[idx]?.id;
-
-  // If user is on yes/no, next should go to final_exit
-  if(currentId === "yes" || currentId === "no"){
-    goToId("final_exit");
-    return;
+  function goToId(id){
+    const i = SLIDES.findIndex(x => x.id === id);
+    if(i >= 0) goTo(i);
   }
 
-  goTo(idx + 1);
-}
+  function next(){
+    if(idx >= SLIDES.length - 1) return;
 
-// Tap to advance ALWAYS (but memory scenes will still auto if you don’t tap)
-stage.addEventListener("click", () => {
-  // tapping cancels pending auto for memories (feels nicer)
-  clearTimeout(autoTimer);
-  next();
-}, {passive:true});
+    const currentId = SLIDES[idx]?.id;
 
-// Keyboard (desktop)
-window.addEventListener("keydown", (e) => {
-  if(e.key === " " || e.key === "Enter" || e.key === "ArrowRight"){
+    // ✅ After NO prank slides, move forward properly
+    if(currentId === "yes"){
+      goToId("final_exit"); return;
+    }
+    if(currentId === "no_fake1"){
+      goToId("no_fake2"); return;
+    }
+    if(currentId === "no_fake2"){
+      goToId("no_fake3"); return;
+    }
+    if(currentId === "no_fake3"){
+      goToId("valentine"); return;
+    }
+    if(currentId === "no_final"){
+      goToId("final_exit"); return;
+    }
+
+    goTo(idx + 1);
+  }
+
+  stage.addEventListener("click", () => {
     clearTimeout(autoTimer);
     next();
-  }
-});
+  }, {passive:true});
 
-// Start
-goTo(0);
+  window.addEventListener("keydown", (e) => {
+    if(e.key === " " || e.key === "Enter" || e.key === "ArrowRight"){
+      clearTimeout(autoTimer);
+      next();
+    }
+  });
+
+  goTo(0);
 </script>
 </body>
 </html>
