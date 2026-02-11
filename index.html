@@ -4,77 +4,101 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Hamad’s Heart</title>
+
   <style>
     :root{
       --card-bg: rgba(10,10,14,.55);
       --text: #fff;
-      --muted: rgba(255,255,255,.75);
-      --accent: #ff6aa5;
+      --muted: rgba(255,255,255,.78);
       --shadow: 0 18px 60px rgba(0,0,0,.55);
     }
-    html,body{height:100%; margin:0; background:#05060a; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+
+    html,body{
+      height:100%;
+      margin:0;
+      background:#05060a;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    /* Stage */
     #stage{
-      position:fixed; inset:0; overflow:hidden;
-      background:#05060a; /* default for RE segment */
+      position:fixed; inset:0;
+      overflow:hidden;
+      background:#05060a; /* RE mode base */
+      transition: background 600ms ease;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       user-select:none;
-      transition: background 600ms ease;
     }
 
-    /* ✅ Pink/cute “Heart” background */
+    /* ✅ Pink/cute heart background (shows when body has .cute) */
     body.cute #stage{
       background:
-        radial-gradient(circle at 20% 20%, rgba(255,106,165,.30) 0 280px, transparent 320px),
-        radial-gradient(circle at 75% 30%, rgba(255,179,208,.22) 0 260px, transparent 320px),
-        radial-gradient(circle at 50% 85%, rgba(255,106,165,.18) 0 320px, transparent 420px),
-        linear-gradient(135deg, #220616, #0c0612 60%, #140615);
+        radial-gradient(circle at 20% 20%, rgba(255,106,165,.34) 0 280px, transparent 320px),
+        radial-gradient(circle at 75% 30%, rgba(255,179,208,.24) 0 260px, transparent 320px),
+        radial-gradient(circle at 50% 85%, rgba(255,106,165,.20) 0 320px, transparent 420px),
+        linear-gradient(135deg, #2a071b, #0c0612 60%, #1a0615);
     }
 
+    /* Background layers (crossfade). IMPORTANT: keep transparent so pink shows when bg is null */
     .bg{
       position:absolute; inset:-20px;
       background: transparent center/cover no-repeat;
-      filter: saturate(1.05) contrast(1.05);
-      transform: scale(1.03);
+      background-color: transparent !important;
       opacity:0;
       transition: opacity 800ms ease;
+      transform: scale(1.02);
+      filter: saturate(1.05) contrast(1.05);
     }
     #bgA{opacity:1;}
     #bgB{opacity:0;}
 
+    /* Hearts overlay */
+    .hearts{
+      position:absolute; inset:0;
+      pointer-events:none;
+      opacity:0;
+      transition: opacity 500ms ease;
+      mix-blend-mode: screen;
+    }
+    .hearts.on{opacity:1;}
+    .hearts::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 12% 20%, rgba(255,106,165,.20) 0 18px, transparent 19px),
+        radial-gradient(circle at 78% 35%, rgba(255,106,165,.14) 0 14px, transparent 15px),
+        radial-gradient(circle at 30% 70%, rgba(255,165,210,.14) 0 16px, transparent 17px),
+        radial-gradient(circle at 65% 82%, rgba(255,106,165,.10) 0 12px, transparent 13px);
+      filter: blur(0.2px);
+    }
+
+    /* Cinematic overlays */
     .vignette{
       position:absolute; inset:0;
       background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%);
       pointer-events:none;
     }
     .grain{
-      position:absolute; inset:0; pointer-events:none;
+      position:absolute; inset:0;
+      pointer-events:none;
       opacity:.15;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
       mix-blend-mode: overlay;
     }
 
-    .hearts{position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity 500ms ease;}
-    .hearts.on{opacity:1;}
-    .hearts::before{
-      content:"";
-      position:absolute; inset:0;
-      background:
-        radial-gradient(circle at 15% 25%, rgba(255,106,165,.18) 0 18px, transparent 19px),
-        radial-gradient(circle at 80% 40%, rgba(255,106,165,.14) 0 14px, transparent 15px),
-        radial-gradient(circle at 30% 70%, rgba(255,165,210,.12) 0 16px, transparent 17px),
-        radial-gradient(circle at 65% 80%, rgba(255,106,165,.10) 0 12px, transparent 13px);
-    }
-
+    /* Text card */
     #overlay{
       position:absolute; inset:0;
-      display:flex; align-items:flex-end; justify-content:center;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
       padding: 24px 16px calc(22px + env(safe-area-inset-bottom));
       box-sizing:border-box;
       pointer-events:none;
     }
     .card{
-      width:min(640px, 96vw);
+      width:min(680px, 96vw);
       background: var(--card-bg);
       color:var(--text);
       border: 1px solid rgba(255,255,255,.14);
@@ -84,10 +108,21 @@
       backdrop-filter: blur(10px);
       pointer-events:auto;
     }
-    .title{margin:0 0 8px; font-size:22px;}
-    .text{margin:0; font-size:15.5px; line-height:1.45; color:var(--muted); white-space:pre-line;}
-    #extra{margin-top:14px;}
+    .title{
+      margin:0 0 8px;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+    .text{
+      margin:0;
+      font-size:15.5px;
+      line-height:1.45;
+      color:var(--muted);
+      white-space:pre-line;
+    }
+    #extra{ margin-top:14px; }
 
+    /* Hint + progress */
     #hint{
       position:absolute;
       left:50%; transform:translateX(-50%);
@@ -101,6 +136,8 @@
       pointer-events:none;
       backdrop-filter: blur(8px);
     }
+    body.cute #hint{ border-color: rgba(255,106,165,.22); }
+
     #progress{
       position:absolute;
       left:50%; transform:translateX(-50%);
@@ -114,8 +151,10 @@
       padding: 6px 10px;
       backdrop-filter: blur(8px);
     }
+    body.cute #progress{ border-color: rgba(255,106,165,.22); }
 
-    .btnRow{display:flex; gap:10px; flex-wrap:wrap;}
+    /* Buttons */
+    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
     .btn{
       appearance:none; border:none; cursor:pointer;
       border-radius:14px;
@@ -139,11 +178,9 @@
       color:#1b0b12;
     }
 
-    .cute .card{ --card-bg: rgba(40,10,25,.52); border-color: rgba(255,106,165,.22); }
-    .cute #hint, .cute #progress{ border-color: rgba(255,106,165,.22); }
-
+    /* Fade out after tennis */
     .fadeOut{
-      animation: fadeOut 1200ms ease forwards;
+      animation: fadeOut 1400ms ease forwards;
     }
     @keyframes fadeOut{
       to { opacity: 0; }
@@ -174,314 +211,350 @@
   </div>
 
 <script>
-  const IMAGE_MAP = {
-    raccoon_city: "raccoon_city.JPG",
-    rpd: "rpd.JPG",
-    leon_q1: "leon_q1.JPG",
-    leon_q2: "leon_q2.JPG",
+/* ===========
+   FILE NAMES
+   ===========
+   Put index.html + ALL images in the same folder, exactly like your repo.
 
-    gym: "gym.PNG",
-    kbbq_hanok: "kbbq_hanok.PNG",
-    shopping_place_vendome: "shopping_place_vendome.PNG",
+   Portal sometimes fails because filename differs.
+   This tries a list until one works.
+*/
+const IMAGE_MAP = {
+  raccoon_city: "raccoon_city.JPG",
+  rpd: "rpd.JPG",
+  leon_q1: "leon_q1.JPG",
+  leon_q2: "leon_q2.JPG",
 
-    portal2: ["porta12.PNG", "portal2.PNG", "PORTAL2.PNG", "porta12.png", "portal2.png"],
+  gym: "gym.PNG",
+  kbbq_hanok: "kbbq_hanok.PNG",
+  shopping_place_vendome: "shopping_place_vendome.PNG",
 
-    weapons_movie: "weapons_movie.PNG",
-    basketball: "basketball.PNG",
-    hiking_japan: "hiking_japan.PNG",
-    bath: "bath.PNG",
-    lng26_exxon: "lng26_exxon.PNG",
-    tennis_2026: "tennis_2026.PNG"
-  };
+  portal2: ["porta12.PNG", "portal2.PNG", "PORTAL2.PNG", "porta12.png", "portal2.png"],
 
-  function isMemorySlideId(id){ return id.startsWith("mem_"); }
-  const MEMORY_AUTO_MS = 2600;
+  weapons_movie: "weapons_movie.PNG",
+  basketball: "basketball.PNG",
+  hiking_japan: "hiking_japan.PNG",
+  bath: "bath.PNG",
+  lng26_exxon: "lng26_exxon.PNG",
+  tennis_2026: "tennis_2026.PNG"
+};
 
-  /* ✅ NEW: state for “No” prank flow */
-  let noAttemptedOnce = false;
+// Memory auto-skip (ONLY the 10 memory scenes)
+const MEMORY_AUTO_MS = 2600;
 
-  const SLIDES = [
-    { id:"intro_warn", mode:"re", bg:null,
-      title:"Attention",
-      text:"This is a personalized message meant only for Sara Hassan Al-Ansari.\nIf you are not her, please exit immediately."
-    },
-    { id:"intro_confirm", mode:"re", bg:null,
-      title:"Good.",
-      text:"Now that I am certain it’s you, let us begin.\nToday, you will be tested, prepare yourself."
-    },
+// "No" prank flow state
+let noAttemptedOnce = false;
 
-    { id:"welcome_rc", mode:"re", bg:"raccoon_city", title:"Welcome to Raccoon City", text:"" },
-    { id:"rpd_shot", mode:"re", bg:"rpd", title:"Raccoon City Police Department", text:"" },
+function isMemorySlideId(id){ return id.startsWith("mem_"); }
 
-    { id:"q1", mode:"re", bg:"leon_q1", title:"Now the test begins,", text:"Question Number 1:\nHow old was Leon in RE4" },
-    { id:"q1_wrong", mode:"re", bg:"leon_q1", title:"WRONG!", text:"He was 27" },
-    { id:"q2", mode:"re", bg:"leon_q2", title:"Now, on to the next question", text:"What’s the most used word by Leon throughout the whole franchise?" },
+/* ===== Slides ===== */
+const SLIDES = [
+  {
+    id:"intro_warn", mode:"re", bg:null,
+    title:"Attention",
+    text:"This is a personalized message meant only for Sara Hassan Al-Ansari.\nIf you are not her, please exit immediately."
+  },
+  {
+    id:"intro_confirm", mode:"re", bg:null,
+    title:"Good.",
+    text:"Now that I am certain it’s you, let us begin\nToday, you will be tested, prepare yourself"
+  },
 
-    { id:"psych", mode:"cute", bg:null,
-      title:"PSYCH!",
-      text:"You really thought that was the test huh,\nwell, sorry to disappoint you but who cares, hehehehe"
-    },
+  { id:"welcome_rc", mode:"re", bg:"raccoon_city", title:"Welcome to Raccoon City", text:"" },
+  { id:"rpd_shot",   mode:"re", bg:"rpd",         title:"Raccoon City Police Department", text:"" },
 
-    /* ✅ Updated text exactly as you requested */
-    { id:"welcome_heart", mode:"cute", bg:null,
-      title:"Welcome Sara",
-      text:"You are now in the chamber we call, Hamad’s Heart,\nA place that was created 30 years ago but only started working on the 21st of May 2025,\nAnd tonight you will be guided through the ally of fondest memories"
-    },
+  {
+    id:"q1", mode:"re", bg:"leon_q1",
+    title:"Now the test begins,",
+    text:"Question Number 1 : How old was Leon in RE4"
+  },
+  {
+    id:"q1_wrong", mode:"re", bg:"leon_q1",
+    title:"WRONG!",
+    text:"He was 27"
+  },
+  {
+    id:"q2", mode:"re", bg:"leon_q2",
+    title:"Now, on to the next question",
+    text:"Whats the most used word by Leon throughout the whole franchise?"
+  },
 
-    { id:"lore_1", mode:"cute", bg:null,
-      title:"",
-      text:"That’s what we call it around here.\nTo be honest, we dont really understand him sometimes and his stupid memories\nbut we thought you might help us understand what all of this means"
-    },
-    { id:"lore_2", mode:"cute", bg:null,
-      title:"",
-      text:"You see we keep seeing him store some dumb activities in the section we call\n(The Ally of Fondest Memories)\nand that usually only stores the fondest of all memories to the person’s heart and soul"
-    },
-    { id:"lore_3", mode:"cute", bg:null,
-      title:"",
-      text:"We will walk you through the ally and show you around 10 scenes or memories that make no sense to us why they’re there,\nbut we really do hope that you can be helpful regarding this matter,\nanyways, we shall begin our journey now"
-    },
+  {
+    id:"psych", mode:"cute", bg:null,
+    title:"PSYCH!",
+    text:"You really thought that was the test huh,\nwell, sorry to disappoint you but who cares, hehehehe"
+  },
 
-    // 10 memories (AUTO SKIP ONLY HERE)
-    { id:"mem_gym", mode:"cute", bg:"gym", title:"Memory", text:"GYM" },
-    { id:"mem_kbbq", mode:"cute", bg:"kbbq_hanok", title:"Memory", text:"KBBQ - HANOK" },
-    { id:"mem_shop", mode:"cute", bg:"shopping_place_vendome", title:"Memory", text:"SHOPPING PLACE VENDOME" },
-    { id:"mem_portal", mode:"cute", bg:"portal2", title:"Memory", text:"PORTAL 2" },
-    { id:"mem_weap", mode:"cute", bg:"weapons_movie", title:"Memory", text:"WEAPONS (MOVIE NIGHT)" },
-    { id:"mem_ball", mode:"cute", bg:"basketball", title:"Memory", text:"BASKETBALL" },
-    { id:"mem_hike", mode:"cute", bg:"hiking_japan", title:"Memory", text:"HIKING (JAPAN)" },
-    { id:"mem_bath", mode:"cute", bg:"bath", title:"Memory", text:"BATH" },
-    { id:"mem_lng", mode:"cute", bg:"lng26_exxon", title:"Memory", text:"LNG26 - EXXONMOBIL" },
-    { id:"mem_tennis", mode:"cute", bg:"tennis_2026", title:"Final Memory", text:"TENNIS 2026" },
+  /* ✅ Updated Hamad’s Heart line exactly */
+  {
+    id:"welcome_heart", mode:"cute", bg:null,
+    title:"Welcome Sara",
+    text:"You are now in the chamber we call, Hamad’s Heart,\nA place that was created 30 years ago but only started working on the 21st of May 2025,\nAnd tonight you will be guided through the ally of fondest memories"
+  },
 
-    { id:"post_tennis_fade", mode:"cute", bg:"tennis_2026", title:"", text:"", special:"fadeAfterTennis" },
+  {
+    id:"lore_1", mode:"cute", bg:null,
+    title:"One last note…",
+    text:"That’s what we call it around here,\nTo be honest, we dont really understand him sometimes and his stupid memories but we thought you might help us understand what all of this means"
+  },
+  {
+    id:"lore_2", mode:"cute", bg:null,
+    title:"",
+    text:"You see we keep seeing him store some dumb activities in the section we call ( The Ally of Fondest Memories )\nAnd that usually only stores the fondest of all memories to the person’s heart and soul"
+  },
+  {
+    id:"lore_3", mode:"cute", bg:null,
+    title:"",
+    text:"We will walk you through the ally and show you around 10 scenes or memories that make no sense to us why they’re there,\nBut we really do hope that you can be helpful regarding this matter,\nAnyways, we shall begin our journey now"
+  },
 
-    { id:"back_to_heart", mode:"cute", bg:null, title:"Back to Hamad’s Heart", text:"…and just like that, we’re back." },
-    { id:"understand_q", mode:"cute", bg:null, title:"Did you understand anything ?", text:"We are so lost" },
-    { id:"understand_a", mode:"cute", bg:null, title:"You did !!?, thats amazing",
-      text:"Since you understood those memories and scenes,\ni guess you can answer his final question and get out of here,\nwe could never get it right"
-    },
-    { id:"calm", mode:"cute", bg:null, title:"", text:"Take a deep breath and remember to stay calm\nif you want to succeed and get out of here safely" },
+  /* ===== 10 memories (AUTO SKIP ONLY HERE) ===== */
+  { id:"mem_gym",    mode:"cute", bg:"gym",                    title:"Memory",      text:"GYM" },
+  { id:"mem_kbbq",   mode:"cute", bg:"kbbq_hanok",             title:"Memory",      text:"KBBQ - HANOK" },
+  { id:"mem_shop",   mode:"cute", bg:"shopping_place_vendome", title:"Memory",      text:"SHOPPING PLACE VENDOME" },
+  { id:"mem_portal", mode:"cute", bg:"portal2",                title:"Memory",      text:"PORTAL 2" },
+  { id:"mem_weap",   mode:"cute", bg:"weapons_movie",          title:"Memory",      text:"WEAPONS (MOVIE NIGHT)" },
+  { id:"mem_ball",   mode:"cute", bg:"basketball",             title:"Memory",      text:"BASKETBALL" },
+  { id:"mem_hike",   mode:"cute", bg:"hiking_japan",           title:"Memory",      text:"HIKING (JAPAN)" },
+  { id:"mem_bath",   mode:"cute", bg:"bath",                   title:"Memory",      text:"BATH" },
+  { id:"mem_lng",    mode:"cute", bg:"lng26_exxon",            title:"Memory",      text:"LNG26 - EXXONMOBIL" },
+  { id:"mem_tennis", mode:"cute", bg:"tennis_2026",            title:"Final Memory",text:"TENNIS 2026" },
 
-    { id:"valentine", mode:"cute", bg:null, title:"Final Question", text:"Will you be my valentine ?", extra:"valentineButtons" },
+  /* Fade after tennis, then back to pink heart */
+  { id:"post_tennis_fade", mode:"cute", bg:"tennis_2026", title:"", text:"", special:"fadeAfterTennis" },
 
-    /* ✅ YES path */
-    { id:"yes", mode:"cute", bg:null, title:"YES 💗", text:"Perfect.\nYou just made his whole universe smile." },
+  { id:"back_to_heart", mode:"cute", bg:null, title:"Back to Hamad’s Heart", text:"…and just like that, we’re back." },
 
-    /* ✅ NO prank sequence */
-    { id:"no_fake1", mode:"cute", bg:null, title:"Wait…", text:"i cant believe you said Yes" },
-    { id:"no_fake2", mode:"cute", bg:null, title:"Yup.", text:"Yes, You did" },
-    { id:"no_fake3", mode:"cute", bg:null, title:"Alright…", text:"Okay okay, lets go back to the question since you cant remember what you chose" },
+  { id:"understand_q", mode:"cute", bg:null, title:"Did you understand anything ?", text:"We are so lost" },
+  { id:"understand_a", mode:"cute", bg:null, title:"You did !!?, thats amazing",
+    text:"Since you understood those memories and scenes,\ni guess you can answer his final question and get out of here,\nwe could never get it right"
+  },
+  { id:"calm", mode:"cute", bg:null, title:"", text:"Take a deep breath and remember to stay calm\nif you want to succeed and get out of here safely" },
 
-    /* ✅ Second NO becomes a “forced yes” love line */
-    { id:"no_final", mode:"cute", bg:null, title:"Aha 💗", text:"I will always be your valentine and your gorgeous girl" },
+  { id:"valentine", mode:"cute", bg:null, title:"Final Question", text:"Will you be my valentine ?", extra:"valentineButtons" },
 
-    { id:"final_exit", mode:"cute", bg:null, title:"One last thing…",
-      text:"You may physically exit Hamad’s heart for now…\nbut you will never be able to leave."
-    }
-  ];
+  /* YES result (goes to final line on next tap) */
+  { id:"yes", mode:"cute", bg:null, title:"YES 💗", text:"Perfect.\nYou just made his whole universe smile." },
 
-  // DOM
-  const stage = document.getElementById("stage");
-  const bgA = document.getElementById("bgA");
-  const bgB = document.getElementById("bgB");
-  const hearts = document.getElementById("hearts");
-  const card = document.getElementById("card");
-  const ttl = document.getElementById("ttl");
-  const txt = document.getElementById("txt");
-  const extra = document.getElementById("extra");
-  const progress = document.getElementById("progress");
+  /* NO prank sequence (first time pressing No) */
+  { id:"no_fake1", mode:"cute", bg:null, title:"", text:"i cant believe you said Yes" },
+  { id:"no_fake2", mode:"cute", bg:null, title:"", text:"Yes, You did" },
+  { id:"no_fake3", mode:"cute", bg:null, title:"", text:"Okay okay, lets go back to the question since you cant remember what you chose" },
 
-  let idx = 0;
-  let usingA = true;
-  let locked = false;
-  let autoTimer = null;
+  /* Second time she presses No: turns into the love line */
+  { id:"no_final", mode:"cute", bg:null, title:"", text:"I will always be your valentine and your gorgeous girl" },
 
-  function setMode(mode){
-    const cute = mode === "cute";
-    document.body.classList.toggle("cute", cute);
-    hearts.classList.toggle("on", cute);
+  /* Final ending line */
+  {
+    id:"final_exit", mode:"cute", bg:null, title:"One last thing…",
+    text:"You may physically exit Hamad’s heart for now but you will never be able to leave"
+  }
+];
+
+/* ===== DOM ===== */
+const stage = document.getElementById("stage");
+const bgA = document.getElementById("bgA");
+const bgB = document.getElementById("bgB");
+const hearts = document.getElementById("hearts");
+const card = document.getElementById("card");
+const ttl = document.getElementById("ttl");
+const txt = document.getElementById("txt");
+const extra = document.getElementById("extra");
+const progress = document.getElementById("progress");
+
+/* ===== State ===== */
+let idx = 0;
+let usingA = true;
+let locked = false;
+let autoTimer = null;
+
+/* ===== Helpers ===== */
+function setMode(mode){
+  const cute = mode === "cute";
+  document.body.classList.toggle("cute", cute);
+  hearts.classList.toggle("on", cute);
+}
+
+function resolveUrl(file){
+  return new URL(file, window.location.href).href;
+}
+
+function candidatesFor(key){
+  const entry = IMAGE_MAP[key];
+  if(!entry) return [];
+  return Array.isArray(entry) ? entry : [entry];
+}
+
+async function pickWorkingFile(key){
+  const cands = candidatesFor(key);
+  for(const file of cands){
+    try{
+      await new Promise((res, rej) => {
+        const im = new Image();
+        im.onload = () => res(true);
+        im.onerror = () => rej(new Error("fail"));
+        im.src = resolveUrl(file);
+      });
+      return file;
+    } catch(e){}
+  }
+  console.error("No working image found for key:", key, "candidates:", cands);
+  return null;
+}
+
+/* ✅ Critical: when bg is null => transparent so pink stage background shows */
+async function crossfadeTo(fileOrNull){
+  const next = usingA ? bgB : bgA;
+  const prev = usingA ? bgA : bgB;
+
+  if(!fileOrNull){
+    next.style.backgroundImage = "none";
+    next.style.backgroundColor = "transparent";
+  } else {
+    next.style.backgroundColor = "transparent";
+    next.style.backgroundImage = `url("${resolveUrl(fileOrNull)}")`;
   }
 
-  function resolveUrl(file){
-    return new URL(file, window.location.href).href;
+  next.style.opacity = "1";
+  prev.style.opacity = "0";
+  usingA = !usingA;
+}
+
+function renderExtra(slide){
+  extra.innerHTML = "";
+
+  if(slide.extra === "valentineButtons"){
+    const row = document.createElement("div");
+    row.className = "btnRow";
+
+    const yes = document.createElement("button");
+    yes.className = "btn pink";
+    yes.textContent = "Yes 💗";
+    yes.onclick = (e)=>{ e.stopPropagation(); goToId("yes"); };
+
+    const no = document.createElement("button");
+    no.className = "btn alt";
+    no.textContent = "No 🙃";
+    no.onclick = (e)=>{
+      e.stopPropagation();
+
+      // First No attempt -> prank sequence
+      if(!noAttemptedOnce){
+        noAttemptedOnce = true;
+        goToId("no_fake1");
+        return;
+      }
+
+      // Second No attempt -> love line
+      goToId("no_final");
+    };
+
+    row.appendChild(yes);
+    row.appendChild(no);
+    extra.appendChild(row);
   }
+}
 
-  function candidatesFor(key){
-    const entry = IMAGE_MAP[key];
-    if(!entry) return [];
-    return Array.isArray(entry) ? entry : [entry];
+function setProgress(){
+  progress.textContent = `${idx+1}/${SLIDES.length}`;
+}
+
+function showSlide(i){
+  const s = SLIDES[i];
+  setMode(s.mode);
+  ttl.textContent = s.title || "";
+  txt.textContent = s.text || "";
+  renderExtra(s);
+  setProgress();
+}
+
+function scheduleAutoIfNeeded(){
+  clearTimeout(autoTimer);
+  const s = SLIDES[idx];
+  if(!s) return;
+
+  // ONLY memory scenes auto-advance
+  if(isMemorySlideId(s.id)){
+    autoTimer = setTimeout(() => next(), MEMORY_AUTO_MS);
   }
+}
 
-  async function pickWorkingFile(key){
-    const cands = candidatesFor(key);
-    for(const file of cands){
-      try{
-        await new Promise((res, rej) => {
-          const im = new Image();
-          im.onload = () => res(true);
-          im.onerror = () => rej(new Error("fail"));
-          im.src = resolveUrl(file);
-        });
-        return file;
-      } catch(e){}
-    }
-    console.error("No working image found for key:", key, "candidates:", cands);
-    return null;
-  }
+async function goTo(i){
+  if(locked) return;
+  const s = SLIDES[i];
+  if(!s) return;
 
-  /* ✅ IMPORTANT FIX: when bg is null, keep it TRANSPARENT so pink stage background shows */
-  async function crossfadeTo(fileOrNull){
-    const next = usingA ? bgB : bgA;
-    const prev = usingA ? bgA : bgB;
+  locked = true;
+  clearTimeout(autoTimer);
 
-    if(!fileOrNull){
-      next.style.backgroundImage = "none";
-      next.style.backgroundColor = "transparent";   // ✅ was dark before
-    } else {
-      next.style.backgroundColor = "transparent";
-      next.style.backgroundImage = `url("${resolveUrl(fileOrNull)}")`;
-    }
-
-    next.style.opacity = "1";
-    prev.style.opacity = "0";
-    usingA = !usingA;
-  }
-
-  function renderExtra(slide){
-    extra.innerHTML = "";
-    if(slide.extra === "valentineButtons"){
-      const row = document.createElement("div");
-      row.className = "btnRow";
-
-      const yes = document.createElement("button");
-      yes.className = "btn pink";
-      yes.textContent = "Yes 💗";
-      yes.onclick = (e)=>{ e.stopPropagation(); goToId("yes"); };
-
-      const no = document.createElement("button");
-      no.className = "btn alt";
-      no.textContent = "No 🙃";
-
-      no.onclick = (e)=>{
-        e.stopPropagation();
-
-        // ✅ First time: prank sequence
-        if(!noAttemptedOnce){
-          noAttemptedOnce = true;
-          goToId("no_fake1");
-          return;
-        }
-
-        // ✅ Second time: turns into love line
-        goToId("no_final");
-      };
-
-      row.appendChild(yes);
-      row.appendChild(no);
-      extra.appendChild(row);
-    }
-  }
-
-  function setProgress(){
-    progress.textContent = `${idx+1}/${SLIDES.length}`;
-  }
-
-  function showSlide(i){
-    const s = SLIDES[i];
-    setMode(s.mode);
-    ttl.textContent = s.title || "";
-    txt.textContent = s.text || "";
-    renderExtra(s);
-    setProgress();
-  }
-
-  function scheduleAutoIfNeeded(){
-    clearTimeout(autoTimer);
-    const s = SLIDES[idx];
-    if(!s) return;
-
-    if(isMemorySlideId(s.id)){
-      autoTimer = setTimeout(() => next(), MEMORY_AUTO_MS);
-    }
-  }
-
-  async function goTo(i){
-    if(locked) return;
-    const s = SLIDES[i];
-    if(!s) return;
-
-    locked = true;
-    clearTimeout(autoTimer);
-
-    if(s.special === "fadeAfterTennis"){
-      card.classList.add("fadeOut");
-      await new Promise(r => setTimeout(r, 1200));
-      card.classList.remove("fadeOut");
-
-      idx = i;
-      showSlide(idx);
-
-      await crossfadeTo(null);
-      locked = false;
-      return;
-    }
-
-    let file = null;
-    if(s.bg){
-      file = await pickWorkingFile(s.bg);
-    }
-    await crossfadeTo(file);
+  // Fade after tennis, then return to heart (pink background)
+  if(s.special === "fadeAfterTennis"){
+    card.classList.add("fadeOut");
+    await new Promise(r => setTimeout(r, 1400));
+    card.classList.remove("fadeOut");
 
     idx = i;
     showSlide(idx);
 
-    setTimeout(()=> locked = false, 850);
-    scheduleAutoIfNeeded();
+    // Clear bg so pink heart stage shows
+    await crossfadeTo(null);
+
+    locked = false;
+    return;
   }
 
-  function goToId(id){
-    const i = SLIDES.findIndex(x => x.id === id);
-    if(i >= 0) goTo(i);
+  let file = null;
+  if(s.bg){
+    file = await pickWorkingFile(s.bg);
   }
 
-  function next(){
-    if(idx >= SLIDES.length - 1) return;
+  await crossfadeTo(file);
 
-    const currentId = SLIDES[idx]?.id;
+  idx = i;
+  showSlide(idx);
 
-    // ✅ After NO prank slides, move forward properly
-    if(currentId === "yes"){
-      goToId("final_exit"); return;
-    }
-    if(currentId === "no_fake1"){
-      goToId("no_fake2"); return;
-    }
-    if(currentId === "no_fake2"){
-      goToId("no_fake3"); return;
-    }
-    if(currentId === "no_fake3"){
-      goToId("valentine"); return;
-    }
-    if(currentId === "no_final"){
-      goToId("final_exit"); return;
-    }
+  setTimeout(()=> locked = false, 850);
+  scheduleAutoIfNeeded();
+}
 
-    goTo(idx + 1);
-  }
+function goToId(id){
+  const i = SLIDES.findIndex(x => x.id === id);
+  if(i >= 0) goTo(i);
+}
 
-  stage.addEventListener("click", () => {
+function next(){
+  if(idx >= SLIDES.length - 1) return;
+
+  const currentId = SLIDES[idx]?.id;
+
+  // Route NO prank sequence
+  if(currentId === "no_fake1"){ goToId("no_fake2"); return; }
+  if(currentId === "no_fake2"){ goToId("no_fake3"); return; }
+  if(currentId === "no_fake3"){ goToId("valentine"); return; }
+
+  // After yes or no_final -> final line
+  if(currentId === "yes"){ goToId("final_exit"); return; }
+  if(currentId === "no_final"){ goToId("final_exit"); return; }
+
+  goTo(idx + 1);
+}
+
+/* Tap to advance ALWAYS.
+   Memory scenes can also auto-advance. */
+stage.addEventListener("click", () => {
+  clearTimeout(autoTimer);
+  next();
+}, {passive:true});
+
+window.addEventListener("keydown", (e) => {
+  if(e.key === " " || e.key === "Enter" || e.key === "ArrowRight"){
     clearTimeout(autoTimer);
     next();
-  }, {passive:true});
+  }
+});
 
-  window.addEventListener("keydown", (e) => {
-    if(e.key === " " || e.key === "Enter" || e.key === "ArrowRight"){
-      clearTimeout(autoTimer);
-      next();
-    }
-  });
-
-  goTo(0);
+// Start
+goTo(0);
 </script>
 </body>
 </html>
